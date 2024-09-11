@@ -7,7 +7,7 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
   let path_segments = wisp.path_segments(req)
 
   case path_segments {
-    ["api", "user", ..rest] -> user_handler.handle_request(rest, req, ctx)
+    ["api", "users", ..rest] -> user_handler.handle_request(rest, req, ctx)
     _ -> wisp.not_found()
   }
 }

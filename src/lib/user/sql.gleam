@@ -66,7 +66,7 @@ values ($1, $2, $3);"
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type AllUsersRow {
-  AllUsersRow(full_name: String, email: String, password_hash: String)
+  AllUsersRow(id: Int, full_name: String, email: String)
 }
 
 /// Runs the `all_users` query
@@ -78,20 +78,16 @@ pub type AllUsersRow {
 pub fn all_users(db) {
   let decoder =
     decode.into({
+      use id <- decode.parameter
       use full_name <- decode.parameter
       use email <- decode.parameter
-      use password_hash <- decode.parameter
-      AllUsersRow(
-        full_name: full_name,
-        email: email,
-        password_hash: password_hash,
-      )
+      AllUsersRow(id: id, full_name: full_name, email: email)
     })
-    |> decode.field(0, decode.string)
+    |> decode.field(0, decode.int)
     |> decode.field(1, decode.string)
     |> decode.field(2, decode.string)
 
-  "select full_name, email, password_hash
+  "select id, full_name, email 
 from users;"
   |> pgo.execute(db, [], decode.from(decoder, _))
 }

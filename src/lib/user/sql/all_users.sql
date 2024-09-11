@@ -1,2 +1,2 @@
-select full_name, email, password_hash
+select id, full_name, email 
 from users;

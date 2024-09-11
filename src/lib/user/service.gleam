@@ -1,19 +1,21 @@
-import gleam/dynamic.{type Dynamic, field, string}
-import gleam/pgo
-import gleam/result
-import lib/common/db
-import lib/user/sql
+//// All data services will crash the server if the database fails on a query!
 
-pub type UserRegistration {
-  UserRegistration(full_name: String, email: String, password_hash: String)
-}
+import gleam/dynamic.{type Dynamic, field, string}
+import gleam/int
+import gleam/list
+import gleam/pgo.{Returned}
+import lib/common/db.{type Db}
+import lib/common/id
+import lib/user/domain/email
+import lib/user/domain/user.{type User}
+import lib/user/sql
 
 pub fn registration_from_json(
   json: Dynamic,
-) -> Result(UserRegistration, dynamic.DecodeErrors) {
+) -> Result(user.UserRegistration, dynamic.DecodeErrors) {
   let decoder =
     dynamic.decode3(
-      UserRegistration,
+      user.UserRegistration,
       field("full_name", of: string),
       field("email", of: string),
       field("password_hash", of: string),
@@ -22,22 +24,23 @@ pub fn registration_from_json(
   decoder(json)
 }
 
-pub fn save_user(db: db.Db, reg: UserRegistration) -> Result(Nil, String) {
-  let db_error_msg = "Database error: Could not save user"
-  case sql.user_by_email(db, reg.email) {
-    Ok(pgo.Returned(count, _)) if count > 0 -> Error("Email already exists")
-    Ok(_) ->
-      {
-        use _ <- result.try(sql.insert_user(
-          db,
-          reg.full_name,
-          reg.email,
-          reg.password_hash,
-        ))
+pub fn save_user(db: Db, reg: user.UserRegistration) -> Result(Nil, String) {
+  let assert Ok(Returned(count, _)) = sql.user_by_email(db, reg.email)
 
-        Ok(Nil)
-      }
-      |> result.map_error(fn(_) { db_error_msg })
-    Error(_) -> Error(db_error_msg)
+  case count > 0 {
+    True -> Error("Email already exists")
+    _ -> {
+      let assert Ok(_) =
+        sql.insert_user(db, reg.full_name, reg.email, reg.password_hash)
+      Ok(Nil)
+    }
   }
+}
+
+pub fn all_users(db: Db) -> List(User) {
+  let assert Ok(Returned(_, rows)) = sql.all_users(db)
+  list.map(rows, fn(row) {
+    let sql.AllUsersRow(id, full_name, email) = row
+    user.User(id |> int.to_string |> id.wrap, full_name, email.Email(email))
+  })
 }

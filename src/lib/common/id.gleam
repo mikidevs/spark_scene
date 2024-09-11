@@ -1,7 +1,7 @@
 import gluid
 
 pub opaque type Id {
-  Id(val: String)
+  Id(value: String)
 }
 
 pub fn new_id() -> Id {
@@ -9,9 +9,9 @@ pub fn new_id() -> Id {
 }
 
 pub fn unwrap(id: Id) -> String {
-  id.val
+  id.value
 }
 
-pub fn wrap(val: String) -> Id {
-  Id(val)
+pub fn wrap(value: String) -> Id {
+  Id(value)
 }

@@ -1,8 +1,10 @@
 import antigone
 import gleam/bit_array
+import gleam/dynamic
+import gleam/result
 
 pub opaque type Password {
-  Password(password: String)
+  Password(value: String)
 }
 
 pub fn create_password(pass: String) -> Password {
@@ -10,7 +12,7 @@ pub fn create_password(pass: String) -> Password {
 }
 
 pub fn unwrap(pass: Password) {
-  pass.password
+  pass.value
 }
 
 pub fn validate(to_verify: String, hashed_password: Password) -> Bool {
@@ -22,4 +24,9 @@ pub fn validate(to_verify: String, hashed_password: Password) -> Bool {
 fn hash(str: String) -> String {
   let bits = bit_array.from_string(str)
   antigone.hash(antigone.hasher(), bits)
+}
+
+pub fn decoder(dyn: dynamic.Dynamic) -> Result(Password, dynamic.DecodeErrors) {
+  use pass <- result.try(dynamic.string(dyn))
+  Ok(Password(pass))
 }

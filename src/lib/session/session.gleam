@@ -1,9 +1,9 @@
 import birl.{type Time}
 import gluid
 import lib/common/db.{type Db}
-import lib/common/email.{type Email}
 import lib/common/id.{type Id}
 import lib/session/sql
+import lib/user/domain/email.{type Email}
 
 pub type Session {
   Session(session_id: Id, user_email: Email, expiration_time: birl.Time)
@@ -14,7 +14,7 @@ pub fn create(db: Db, email: Email, expiration_time: Time) {
   sql.insert_session(
     db,
     session_id,
-    email.val,
+    email.value,
     birl.to_erlang_datetime(expiration_time),
   )
 }
