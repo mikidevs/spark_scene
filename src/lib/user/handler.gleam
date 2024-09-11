@@ -48,7 +48,7 @@ fn register(req: Request, ctx: Context) -> Response {
 fn login(req: Request, ctx: Context) -> Response {
   use user_json <- wisp.require_json(req)
   use user <- require_json_login_user(user_json)
-  case user_db.login_user_by_email(ctx.db, user.email) {
+  case user_db.user_by_email(ctx.db, user.email) {
     Ok(db_user) -> {
       case validations.validate_login_user(user, db_user) {
         Ok(_) -> {
@@ -56,7 +56,7 @@ fn login(req: Request, ctx: Context) -> Response {
           let session_id =
             session.create(
               ctx.db,
-              db_user.email,
+              db_user.id,
               birl.now() |> birl.add(duration.minutes(session_time)),
             )
           let success = json_util.message("User login successful")
@@ -123,7 +123,7 @@ fn require_json_login_user(
 ) -> Response {
   case login_user.decode_from_json(user_json) {
     Ok(user) -> {
-      use <- require_valid_email_string(user.email)
+      use <- require_valid_email_string(user.email.value)
       next(user)
     }
     Error(_) -> {

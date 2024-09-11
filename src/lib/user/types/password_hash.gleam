@@ -13,3 +13,7 @@
 //   let bits = bit_array.from_string(str)
 //   antigone.hash(antigone.hasher(), bits)
 // }
+
+pub type PasswordHash {
+  PasswordHash(value: String)
+}

@@ -7,6 +7,7 @@ import gleam/regex
 import gleam/result
 import gleam/string
 import lib/user/types/login_user.{type LoginUser}
+import lib/user/types/user.{type User}
 
 pub fn validate_password(
   to_verify: String,
@@ -41,12 +42,16 @@ pub fn validate_email(to_verify: String, email: String) -> Result(Nil, String) {
 
 pub fn validate_login_user(
   to_verify: LoginUser,
-  against: LoginUser,
+  against: User,
 ) -> Result(Nil, String) {
-  let login_user.LoginUser(valid_email, valid_password) = against
   let login_user.LoginUser(email, pass) = to_verify
+  let user.User(_, _, email: valid_email, password_hash: valid_password) =
+    against
 
-  [validate_email(email, valid_email), validate_password(pass, valid_password)]
+  [
+    validate_email(email.value, valid_email.value),
+    validate_password(pass, valid_password),
+  ]
   |> result.all
   |> result.map(fn(_) { Nil })
 }

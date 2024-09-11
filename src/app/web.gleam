@@ -43,3 +43,7 @@ pub fn post(
     _ -> wisp.method_not_allowed([Post])
   }
 }
+
+pub fn validate_cookie(value: String, db: Db) {
+  todo
+}

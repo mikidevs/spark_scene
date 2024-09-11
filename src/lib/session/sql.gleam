@@ -31,11 +31,11 @@ pub fn update_session(db, arg_1, arg_2) {
 pub fn insert_session(db, arg_1, arg_2, arg_3) {
   let decoder = decode.map(decode.dynamic, fn(_) { Nil })
 
-  "insert into sessions (session_id, user_email, expiration_time)
+  "insert into sessions (session_id, user_id, expiration_time)
 values ($1, $2, $3);"
   |> pgo.execute(
     db,
-    [pgo.text(arg_1), pgo.text(arg_2), pgo.timestamp(arg_3)],
+    [pgo.text(arg_1), pgo.int(arg_2), pgo.timestamp(arg_3)],
     decode.from(decoder, _),
   )
 }
