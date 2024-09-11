@@ -1,7 +1,7 @@
 import gleam/dynamic.{type Dynamic, field, string}
 
 pub type RegisterUser {
-  RegisterUser(full_name: String, email: String, password_hash: String)
+  RegisterUser(full_name: String, email: String, password: String)
 }
 
 pub fn decode_from_json(
@@ -12,7 +12,7 @@ pub fn decode_from_json(
       RegisterUser,
       field("full_name", of: string),
       field("email", of: string),
-      field("password_hash", of: string),
+      field("password", of: string),
     )
 
   decoder(json)

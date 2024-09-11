@@ -13,7 +13,7 @@ import wisp/wisp_mist
 pub fn main() {
   let _ =
     radiate.new()
-    |> radiate.add_dir("/mnt/c/Users/Miki/Dev/gleam/spark_scene")
+    |> radiate.add_dir(".")
     |> radiate.on_reload(fn(_state, path) {
       io.println("Change in " <> path <> ", reloading")
     })

@@ -23,8 +23,8 @@ pub fn handle_request(
   case path_segments {
     [] ->
       case req.method {
-        Get -> all(req, ctx)
         Post -> register(req, ctx)
+        Get -> web.requires_auth(req, ctx, all)
         _ -> wisp.method_not_allowed([Get, Post])
       }
     ["login"] -> web.post(req, ctx, login)

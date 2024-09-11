@@ -5,6 +5,7 @@ import gleam/pgo.{Returned}
 import lib/common/db.{type Db}
 import lib/user/sql
 import lib/user/types/email
+import lib/user/types/password
 import lib/user/types/register_user.{type RegisterUser}
 import lib/user/types/user.{type User, User}
 
@@ -15,7 +16,12 @@ pub fn save_user_registration(db: Db, reg: RegisterUser) -> Result(Nil, String) 
     True -> Error("This email is already being used")
     _ -> {
       let assert Ok(_) =
-        sql.insert_user(db, reg.full_name, reg.email, reg.password_hash)
+        sql.insert_user(
+          db,
+          reg.full_name,
+          reg.email,
+          password.hash(reg.password),
+        )
       Ok(Nil)
     }
   }

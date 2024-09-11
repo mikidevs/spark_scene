@@ -1,51 +1,5 @@
 import decode
-import gleam/option.{type Option}
 import gleam/pgo
-
-/// A row you get from running the `user_for_session` query
-/// defined in `./src/lib/user/sql/user_for_session.sql`.
-///
-/// > 🐿️ This type definition was generated automatically using v1.7.0 of the
-/// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
-///
-pub type UserForSessionRow {
-  UserForSessionRow(
-    full_name: String,
-    email: String,
-    expiration_time: Option(#(#(Int, Int, Int), #(Int, Int, Int))),
-  )
-}
-
-/// Runs the `user_for_session` query
-/// defined in `./src/lib/user/sql/user_for_session.sql`.
-///
-/// > 🐿️ This function was generated automatically using v1.7.0 of
-/// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
-///
-pub fn user_for_session(db, arg_1) {
-  let decoder =
-    decode.into({
-      use full_name <- decode.parameter
-      use email <- decode.parameter
-      use expiration_time <- decode.parameter
-      UserForSessionRow(
-        full_name: full_name,
-        email: email,
-        expiration_time: expiration_time,
-      )
-    })
-    |> decode.field(0, decode.string)
-    |> decode.field(1, decode.string)
-    |> decode.field(2, decode.optional(timestamp_decoder()))
-
-  "select u.full_name, u.email, s.expiration_time
-from users u
-join sessions s on u.id = s.user_id
-where s.session_id = $1;
-"
-  |> pgo.execute(db, [pgo.text(arg_1)], decode.from(decoder, _))
-}
-
 
 /// A row you get from running the `user_by_email` query
 /// defined in `./src/lib/user/sql/user_by_email.sql`.
@@ -151,17 +105,4 @@ pub fn all_users(db) {
   "select id, full_name, email, password_hash 
 from users;"
   |> pgo.execute(db, [], decode.from(decoder, _))
-}
-
-
-// --- UTILS -------------------------------------------------------------------
-
-/// A decoder to decode `timestamp`s coming from a Postgres query.
-///
-fn timestamp_decoder() {
-  use dynamic <- decode.then(decode.dynamic)
-  case pgo.decode_timestamp(dynamic) {
-    Ok(timestamp) -> decode.into(timestamp)
-    Error(_) -> decode.fail("timestamp")
-  }
 }

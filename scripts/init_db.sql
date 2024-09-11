@@ -8,7 +8,7 @@ create table if not exists users (
 create table if not exists sessions (
     session_id text primary key,
     user_id integer not null,
-    expiration_time timestamp,
+    expiration_time timestamp not null,
     constraint fk_user
         foreign key(user_id)
             references users(id)

@@ -3,7 +3,7 @@ import gleam/result
 import lib/user/types/email.{type Email}
 
 pub type LoginUser {
-  LoginUser(email: Email, password_hash: String)
+  LoginUser(email: Email, password: String)
 }
 
 pub fn decode_from_json(
@@ -16,7 +16,7 @@ pub fn decode_from_json(
         use email_str <- result.try(dynamic.string(dyn))
         Ok(email.Email(email_str))
       }),
-      field("password_hash", of: string),
+      field("password", of: string),
     )
 
   decoder(json)
