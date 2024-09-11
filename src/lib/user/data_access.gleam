@@ -4,9 +4,7 @@ import gleam/int
 import gleam/list
 import gleam/pgo.{Returned}
 import lib/common/db.{type Db}
-import lib/common/id
 import lib/user/sql
-import lib/user/types/email
 import lib/user/types/login_user.{type LoginUser}
 import lib/user/types/register_user.{type RegisterUser}
 import lib/user/types/user.{type User, User}
@@ -39,6 +37,6 @@ pub fn all_users(db: Db) -> List(User) {
   let assert Ok(Returned(_, rows)) = sql.all_users(db)
   list.map(rows, fn(row) {
     let sql.AllUsersRow(id, full_name, email) = row
-    User(id |> int.to_string |> id.wrap, full_name, email.Email(email))
+    User(id |> int.to_string, full_name, email)
   })
 }

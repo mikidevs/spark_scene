@@ -1,12 +1,14 @@
 import app/web.{type Context}
+import birl
+import birl/duration
 import gleam/dynamic
 import gleam/http.{Get, Post}
 import gleam/json
 import gleam/list
 import gleam/string_builder
 import lib/common/json_util
+import lib/session/session
 import lib/user/data_access as user_db
-import lib/user/types/email
 import lib/user/types/login_user
 import lib/user/types/register_user
 import lib/user/types/user
@@ -33,11 +35,10 @@ pub fn handle_request(
 fn register(req: Request, ctx: Context) -> Response {
   use user_json <- wisp.require_json(req)
   use user <- require_json_register_user(user_json)
-  use <- require_valid_email(user.email)
   case user_db.save_user_registration(ctx.db, user) {
     Ok(_) -> wisp.created()
     Error(msg) -> {
-      let error = json_util.error_message(msg)
+      let error = json_util.message(msg)
       wisp.unprocessable_entity()
       |> wisp.json_body(error)
     }
@@ -46,21 +47,38 @@ fn register(req: Request, ctx: Context) -> Response {
 
 fn login(req: Request, ctx: Context) -> Response {
   use user_json <- wisp.require_json(req)
-  use login_user <- require_json_login_user(user_json)
-  use <- require_valid_email(login_user.email)
-  case user_db.login_user_by_email(ctx.db, login_user.email) {
+  use user <- require_json_login_user(user_json)
+  case user_db.login_user_by_email(ctx.db, user.email) {
     Ok(db_user) -> {
-      case validations.validate_login_user(login_user, db_user) {
-        Ok(_) -> wisp.ok()
+      case validations.validate_login_user(user, db_user) {
+        Ok(_) -> {
+          let session_time = 30
+          let session_id =
+            session.create(
+              ctx.db,
+              db_user.email,
+              birl.now() |> birl.add(duration.minutes(session_time)),
+            )
+          let success = json_util.message("User login successful")
+          wisp.ok()
+          |> wisp.set_cookie(
+            req,
+            "AUTH_COOKIE",
+            session_id,
+            wisp.Signed,
+            session_time * 60,
+          )
+          |> wisp.json_body(success)
+        }
         Error(msg) -> {
-          let error = json_util.error_message(msg)
+          let error = json_util.message(msg)
           wisp.unprocessable_entity()
           |> wisp.json_body(error)
         }
       }
     }
     Error(msg) -> {
-      let error = json_util.error_message(msg)
+      let error = json_util.message(msg)
       wisp.bad_request()
       |> wisp.json_body(error)
     }
@@ -87,9 +105,12 @@ fn require_json_register_user(
   next: fn(register_user.RegisterUser) -> Response,
 ) -> Response {
   case register_user.decode_from_json(user_json) {
-    Ok(user) -> next(user)
+    Ok(user) -> {
+      use <- require_valid_email_string(user.email)
+      next(user)
+    }
     Error(_) -> {
-      let error = json_util.error_message("Invalid registration submission")
+      let error = json_util.message("Invalid registration submission")
       wisp.bad_request()
       |> wisp.json_body(error)
     }
@@ -101,20 +122,23 @@ fn require_json_login_user(
   next: fn(login_user.LoginUser) -> Response,
 ) -> Response {
   case login_user.decode_from_json(user_json) {
-    Ok(user) -> next(user)
+    Ok(user) -> {
+      use <- require_valid_email_string(user.email)
+      next(user)
+    }
     Error(_) -> {
-      let error = json_util.error_message("Invalid login submission")
+      let error = json_util.message("Invalid login submission")
       wisp.bad_request()
       |> wisp.json_body(error)
     }
   }
 }
 
-fn require_valid_email(email: String, next: fn() -> Response) -> Response {
-  case email.is_valid(email) {
+fn require_valid_email_string(email: String, next: fn() -> Response) -> Response {
+  case validations.is_valid_email_string(email) {
     True -> next()
     False -> {
-      let error = json_util.error_message("Invalid email address")
+      let error = json_util.message("Invalid email address")
       wisp.unprocessable_entity()
       |> wisp.json_body(error)
     }
