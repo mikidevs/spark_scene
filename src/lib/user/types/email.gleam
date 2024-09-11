@@ -4,10 +4,6 @@ pub type Email {
   Email(value: String)
 }
 
-pub fn unwrap(email: Email) -> String {
-  email.value
-}
-
 pub fn is_valid(to_verify: String) -> Bool {
   let assert Ok(reg) =
     regex.from_string(

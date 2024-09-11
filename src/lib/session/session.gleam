@@ -3,7 +3,7 @@ import gluid
 import lib/common/db.{type Db}
 import lib/common/id.{type Id}
 import lib/session/sql
-import lib/user/domain/email.{type Email}
+import lib/user/types/email.{type Email}
 
 pub type Session {
   Session(session_id: Id, user_email: Email, expiration_time: birl.Time)
