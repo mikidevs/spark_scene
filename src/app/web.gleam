@@ -12,6 +12,20 @@ pub type Context {
   Context(db: Db)
 }
 
+fn allow_origin(resp: Response, origin: String) {
+  resp
+  |> wisp.set_header("access-control-allow-origin", origin)
+}
+
+fn handle_options(req: Request, next: fn() -> Response) -> Response {
+  case req.method {
+    http.Options ->
+      wisp.no_content()
+      |> wisp.set_header("allow", "OPTIONS, GET, HEAD, POST")
+    _ -> next()
+  }
+}
+
 pub fn middleware(
   req: Request,
   ctx: Context,
@@ -25,7 +39,10 @@ pub fn middleware(
 
   use req <- wisp.handle_head(req)
 
+  use <- handle_options(req)
+
   handle_request(req, ctx)
+  |> allow_origin("*")
 }
 
 pub fn get(

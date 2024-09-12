@@ -36,7 +36,11 @@ fn register(req: Request, ctx: Context) -> Response {
   use user_json <- wisp.require_json(req)
   use user <- require_json_register_user(user_json)
   case user_db.save_user_registration(ctx.db, user) {
-    Ok(_) -> wisp.created()
+    Ok(_) -> {
+      let success = json_util.message("User was successfully registered")
+      wisp.created()
+      |> wisp.json_body(success)
+    }
     Error(msg) -> {
       let error = json_util.message(msg)
       wisp.unprocessable_entity()

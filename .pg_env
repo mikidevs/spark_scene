@@ -1,1 +1,1 @@
-export DATABASE_URL="postgres://postgres:postgres@localhost:5432/spark_scene"
+export DATABASE_URL="postgres://postgres:postgres@localhost:5555/spark_scene"

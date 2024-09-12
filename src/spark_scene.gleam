@@ -25,6 +25,7 @@ pub fn main() {
         ..pgo.default_config(),
         host: "localhost",
         user: "postgres",
+        port: 5555,
         password: option.Some("postgres"),
         database: "spark_scene",
         pool_size: 15,

@@ -7,7 +7,7 @@
 ## Connect to postgres
 
 ```
-sudo -u postgres psql -d spark_scene
+sudo -u postgres psql -p 5555 -d spark_scene
 ```
 
 ## Run Database Initialiser
@@ -20,4 +20,9 @@ sudo -u postgres psql -d spark_scene
 
 ```
 gleam run -m squirrel
+```
+
+## Run program
+```
+source .pg_env && gleam run
 ```
