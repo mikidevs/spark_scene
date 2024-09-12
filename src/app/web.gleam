@@ -1,5 +1,6 @@
 import birl
 import birl/duration
+import deps/cors_builder as cors
 import gleam/http.{Get, Post}
 import gleam/order
 import gleam/string_builder
@@ -12,18 +13,12 @@ pub type Context {
   Context(db: Db)
 }
 
-fn allow_origin(resp: Response, origin: String) {
-  resp
-  |> wisp.set_header("access-control-allow-origin", origin)
-}
-
-fn handle_options(req: Request, next: fn() -> Response) -> Response {
-  case req.method {
-    http.Options ->
-      wisp.no_content()
-      |> wisp.set_header("allow", "OPTIONS, GET, HEAD, POST")
-    _ -> next()
-  }
+fn cors() {
+  cors.new()
+  |> cors.allow_origin("http://localhost:1234")
+  |> cors.allow_method(Get)
+  |> cors.allow_method(Post)
+  |> cors.allow_header("content-type")
 }
 
 pub fn middleware(
@@ -39,10 +34,9 @@ pub fn middleware(
 
   use req <- wisp.handle_head(req)
 
-  use <- handle_options(req)
+  use req <- cors.wisp_middleware(req, cors())
 
   handle_request(req, ctx)
-  |> allow_origin("*")
 }
 
 pub fn get(
