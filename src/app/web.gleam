@@ -1,10 +1,12 @@
 import birl
 import birl/duration
 import deps/cors_builder as cors
+import gleam/dynamic.{type Dynamic}
 import gleam/http.{Get, Post}
 import gleam/order
 import gleam/string_builder
 import lib/common/db.{type Db}
+import lib/common/json_util
 import lib/session/data_access as session_db
 import lib/session/session
 import wisp.{type Request, type Response}
@@ -115,5 +117,38 @@ pub fn requires_auth(
       handler(request, context)
     }
     Error(_) -> unauthorized()
+  }
+}
+
+/// Tries to decode json and returns a bad request when the json is invalid
+pub fn json_guard(
+  json: Dynamic,
+  decoder: fn(Dynamic) -> Result(a, String),
+  handler: fn(a) -> Response,
+) -> Response {
+  case decoder(json) {
+    Ok(t) -> handler(t)
+    Error(msg) -> {
+      let error = json_util.message(msg)
+      wisp.bad_request()
+      |> wisp.json_body(error)
+    }
+  }
+}
+
+/// Tries to run a validator against a value and returns an unprocessable content when the validation fails
+pub fn validation_guard(
+  to_validate: a,
+  valid: b,
+  validator: fn(a, b) -> Result(Nil, String),
+  handler: fn(b) -> Response,
+) {
+  case validator(to_validate, valid) {
+    Ok(_) -> handler(valid)
+    Error(msg) -> {
+      let error = json_util.message(msg)
+      wisp.unprocessable_entity()
+      |> wisp.json_body(error)
+    }
   }
 }

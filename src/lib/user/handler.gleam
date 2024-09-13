@@ -1,7 +1,7 @@
 import app/web.{type Context}
 import birl
 import birl/duration
-import gleam/dynamic
+import gleam/bool
 import gleam/http.{Get, Post}
 import gleam/json
 import gleam/list
@@ -34,8 +34,8 @@ pub fn handle_request(
 
 fn register(req: Request, ctx: Context) -> Response {
   use user_json <- wisp.require_json(req)
-  use user <- require_json_register_user(user_json)
-  case user_db.save_user_registration(ctx.db, user) {
+  use reg_user <- web.json_guard(user_json, register_user.decode_from_json)
+  case user_db.save_user_registration(ctx.db, reg_user) {
     Ok(_) -> {
       let success = json_util.message("User was successfully registered")
       wisp.created()
@@ -51,39 +51,41 @@ fn register(req: Request, ctx: Context) -> Response {
 
 fn login(req: Request, ctx: Context) -> Response {
   use user_json <- wisp.require_json(req)
-  use user <- require_json_login_user(user_json)
-  case user_db.user_by_email(ctx.db, user.email) {
+  use login_user <- web.json_guard(user_json, login_user.decode_from_json)
+  use <- bool.guard(!validations.is_valid_email_string(login_user.email), {
+    let error = json_util.message("Invalid email address")
+    wisp.unprocessable_entity()
+    |> wisp.json_body(error)
+  })
+
+  case user_db.user_by_email(ctx.db, login_user.email) {
     Ok(db_user) -> {
-      case validations.validate_login_user(user, db_user) {
-        Ok(_) -> {
-          let session_time = 30
-          let session_id =
-            session.create(
-              ctx.db,
-              db_user.id,
-              birl.now() |> birl.add(duration.minutes(session_time)),
-            )
-          let success = json_util.message("User login successful")
-          wisp.ok()
-          |> wisp.set_cookie(
-            req,
-            "AUTH_COOKIE",
-            session_id,
-            wisp.Signed,
-            session_time * 60,
-          )
-          |> wisp.json_body(success)
-        }
-        Error(msg) -> {
-          let error = json_util.message(msg)
-          wisp.unprocessable_entity()
-          |> wisp.json_body(error)
-        }
-      }
+      use user <- web.validation_guard(
+        login_user,
+        db_user,
+        validations.validate_login_user,
+      )
+      let session_time = 30
+      let session_id =
+        session.create(
+          ctx.db,
+          user.id,
+          birl.now() |> birl.add(duration.minutes(session_time)),
+        )
+      let success = json_util.message("User login successful")
+      wisp.ok()
+      |> wisp.set_cookie(
+        req,
+        "AUTH_COOKIE",
+        session_id,
+        wisp.Signed,
+        session_time * 60,
+      )
+      |> wisp.json_body(success)
     }
     Error(msg) -> {
       let error = json_util.message(msg)
-      wisp.bad_request()
+      wisp.unprocessable_entity()
       |> wisp.json_body(error)
     }
   }
@@ -102,49 +104,4 @@ fn all(_: Request, ctx: Context) -> Response {
 
   wisp.ok()
   |> wisp.json_body(body)
-}
-
-fn require_json_register_user(
-  user_json: dynamic.Dynamic,
-  next: fn(register_user.RegisterUser) -> Response,
-) -> Response {
-  case register_user.decode_from_json(user_json) {
-    Ok(user) -> {
-      use <- require_valid_email_string(user.email)
-      next(user)
-    }
-    Error(_) -> {
-      let error = json_util.message("Invalid registration submission")
-      wisp.bad_request()
-      |> wisp.json_body(error)
-    }
-  }
-}
-
-fn require_json_login_user(
-  user_json: dynamic.Dynamic,
-  next: fn(login_user.LoginUser) -> Response,
-) -> Response {
-  case login_user.decode_from_json(user_json) {
-    Ok(user) -> {
-      use <- require_valid_email_string(user.email.value)
-      next(user)
-    }
-    Error(_) -> {
-      let error = json_util.message("Invalid login submission")
-      wisp.bad_request()
-      |> wisp.json_body(error)
-    }
-  }
-}
-
-fn require_valid_email_string(email: String, next: fn() -> Response) -> Response {
-  case validations.is_valid_email_string(email) {
-    True -> next()
-    False -> {
-      let error = json_util.message("Invalid email address")
-      wisp.unprocessable_entity()
-      |> wisp.json_body(error)
-    }
-  }
 }

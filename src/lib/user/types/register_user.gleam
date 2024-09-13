@@ -1,12 +1,11 @@
 import gleam/dynamic.{type Dynamic, field, string}
+import gleam/result
 
 pub type RegisterUser {
   RegisterUser(full_name: String, email: String, password: String)
 }
 
-pub fn decode_from_json(
-  json: Dynamic,
-) -> Result(RegisterUser, dynamic.DecodeErrors) {
+pub fn decode_from_json(json: Dynamic) -> Result(RegisterUser, String) {
   let decoder =
     dynamic.decode3(
       RegisterUser,
@@ -16,4 +15,5 @@ pub fn decode_from_json(
     )
 
   decoder(json)
+  |> result.map_error(fn(_) { "Invalid registration submission" })
 }

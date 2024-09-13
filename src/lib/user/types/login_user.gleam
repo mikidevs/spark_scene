@@ -6,9 +6,7 @@ pub type LoginUser {
   LoginUser(email: Email, password: String)
 }
 
-pub fn decode_from_json(
-  json: Dynamic,
-) -> Result(LoginUser, dynamic.DecodeErrors) {
+pub fn decode_from_json(json: Dynamic) -> Result(LoginUser, String) {
   let decoder =
     dynamic.decode2(
       LoginUser,
@@ -20,4 +18,5 @@ pub fn decode_from_json(
     )
 
   decoder(json)
+  |> result.map_error(fn(_) { "Invalid login submission" })
 }
