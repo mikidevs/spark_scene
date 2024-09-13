@@ -1,10 +1,13 @@
 import birl
 import gleam/pgo
 import lib/common/db.{type Db}
-import lib/session/session.{type Session}
+import lib/session/session.{type Session, type SessionError}
 import lib/session/sql
 
-pub fn session_by_id(db: Db, session_id: String) -> Result(Session, String) {
+pub fn session_by_id(
+  db: Db,
+  session_id: String,
+) -> Result(Session, SessionError) {
   let assert Ok(pgo.Returned(_, rows)) = sql.session_by_id(db, session_id)
   case rows {
     [row] ->
@@ -17,6 +20,6 @@ pub fn session_by_id(db: Db, session_id: String) -> Result(Session, String) {
           ))
         }
       }
-    _ -> Error("Session does not exist")
+    _ -> Error(session.SessionDoesNotExist)
   }
 }

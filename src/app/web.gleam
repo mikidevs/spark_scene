@@ -4,11 +4,12 @@ import deps/cors_builder as cors
 import gleam/dynamic.{type Dynamic}
 import gleam/http.{Get, Post}
 import gleam/order
+import gleam/result
 import gleam/string_builder
 import lib/common/db.{type Db}
 import lib/common/json_util
 import lib/session/data_access as session_db
-import lib/session/session
+import lib/session/session.{type SessionError, Session}
 import wisp.{type Request, type Response}
 
 pub type Context {
@@ -67,57 +68,57 @@ fn unauthorized() {
   wisp.html_response(string_builder.new(), 401)
 }
 
-type SessionError {
-  SessionExpired
-  SessionDoesNotExist
+fn get_session_cookie(request: Request) {
+  wisp.get_cookie(request, "AUTH_COOKIE", wisp.Signed)
+  |> result.replace_error(session.SessionDoesNotExist)
 }
 
 /// If session expires in 10 minutes, add 20 minutes to the session expiration
 fn validate_cookie(db: Db, session_id: String) -> Result(Nil, SessionError) {
-  case session_db.session_by_id(db, session_id) {
-    Ok(session) -> {
-      let session.Session(session_id, _, expiration_time) = session
-      case birl.compare(expiration_time, birl.now()) {
-        order.Gt | order.Eq -> {
-          case
-            birl.difference(expiration_time, birl.now())
-            |> duration.compare(duration.minutes(10))
-          {
-            order.Lt | order.Eq -> {
-              birl.now()
-              |> birl.add(duration.minutes(20))
-              |> session.update(db, session_id, _)
-              Ok(Nil)
-            }
-            _ -> Ok(Nil)
-          }
+  use session <- result.try(session_db.session_by_id(db, session_id))
+  let session.Session(session_id, _, expiration_time) = session
+  case birl.compare(expiration_time, birl.now()) {
+    order.Gt | order.Eq -> {
+      case
+        birl.difference(expiration_time, birl.now())
+        |> duration.compare(duration.minutes(10))
+      {
+        order.Lt | order.Eq -> {
+          birl.now()
+          |> birl.add(duration.minutes(20))
+          |> session.update(db, session_id, _)
+          Ok(Nil)
         }
-        _ -> Error(SessionExpired)
+        _ -> Ok(Nil)
       }
     }
-    _ -> Error(SessionDoesNotExist)
+    _ -> Error(session.SessionExpired)
   }
 }
 
+/// Checks the request session cookie and validates it
 pub fn requires_auth(
   request: Request,
   context: Context,
   handler: fn(Request, Context) -> Response,
 ) -> Response {
-  case wisp.get_cookie(request, "AUTH_COOKIE", wisp.Signed) {
-    Ok(session_id) -> {
-      case validate_cookie(context.db, session_id) {
-        Ok(_) -> handler(request, context)
-        Error(SessionExpired) -> {
-          let _ = session.destroy(context.db, session_id)
-          unauthorized()
-        }
-        Error(SessionDoesNotExist) -> unauthorized()
-      }
-      handler(request, context)
-    }
-    Error(_) -> unauthorized()
+  {
+    use session_id <- result.try(get_session_cookie(request))
+    use _ <- result.try(validate_cookie(context.db, session_id))
+    use _ <- result.try(session.destroy(context.db, session_id))
+    Ok(handler(request, context))
   }
+  |> result.map_error(fn(session_error) {
+    let msg = case session_error {
+      session.SessionExpired ->
+        json_util.message("Your session has expired, please login again")
+      _ -> json_util.message("You are not logged in")
+    }
+
+    unauthorized()
+    |> wisp.json_body(msg)
+  })
+  |> result.unwrap_both
 }
 
 /// Tries to decode json and returns a bad request when the json is invalid
