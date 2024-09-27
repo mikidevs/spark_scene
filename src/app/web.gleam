@@ -7,10 +7,10 @@ import gleam/json
 import gleam/order
 import gleam/result
 import gleam/string_builder
+import lib/auth/model/session.{type SessionError, Session}
+import lib/auth/session_repository as session_repo
 import lib/common/db.{type Db}
 import lib/common/json_util
-import lib/session/data_access as session_db
-import lib/session/session.{type SessionError, Session}
 import wisp.{type Request, type Response}
 
 pub type Context {
@@ -73,7 +73,7 @@ fn get_session_cookie(request: Request) {
 
 /// If session expires in 10 minutes, add 20 minutes to the session expiration
 fn validate_cookie(db: Db, session_id: String) -> Result(Nil, SessionError) {
-  use session <- result.try(session_db.session_by_id(db, session_id))
+  use session <- result.try(session_repo.session_by_id(db, session_id))
   let session.Session(session_id, _, expiration_time) = session
   case birl.compare(expiration_time, birl.now()) {
     order.Gt | order.Eq -> {
@@ -121,10 +121,11 @@ pub fn requires_auth(
 
 /// Tries to decode json and returns a bad request when the json is invalid
 pub fn json_guard(
-  json: Dynamic,
+  req: Request,
   decoder: fn(Dynamic) -> Result(a, String),
   handler: fn(a) -> Response,
 ) -> Response {
+  use json <- wisp.require_json(req)
   case decoder(json) {
     Ok(t) -> handler(t)
     Error(msg) -> {

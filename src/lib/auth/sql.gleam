@@ -2,7 +2,7 @@ import decode
 import gleam/pgo
 
 /// Runs the `update_session` query
-/// defined in `./src/lib/session/sql/update_session.sql`.
+/// defined in `./src/lib/auth/sql/update_session.sql`.
 ///
 /// > 🐿️ This function was generated automatically using v1.7.0 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
@@ -23,7 +23,7 @@ pub fn update_session(db, arg_1, arg_2) {
 
 
 /// A row you get from running the `session_by_id` query
-/// defined in `./src/lib/session/sql/session_by_id.sql`.
+/// defined in `./src/lib/auth/sql/session_by_id.sql`.
 ///
 /// > 🐿️ This type definition was generated automatically using v1.7.0 of the
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
@@ -37,7 +37,7 @@ pub type SessionByIdRow {
 }
 
 /// Runs the `session_by_id` query
-/// defined in `./src/lib/session/sql/session_by_id.sql`.
+/// defined in `./src/lib/auth/sql/session_by_id.sql`.
 ///
 /// > 🐿️ This function was generated automatically using v1.7.0 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
@@ -66,7 +66,7 @@ where session_id = $1;"
 
 
 /// Runs the `insert_session` query
-/// defined in `./src/lib/session/sql/insert_session.sql`.
+/// defined in `./src/lib/auth/sql/insert_session.sql`.
 ///
 /// > 🐿️ This function was generated automatically using v1.7.0 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
@@ -85,7 +85,7 @@ values ($1, $2, $3);"
 
 
 /// Runs the `destroy_session` query
-/// defined in `./src/lib/session/sql/destroy_session.sql`.
+/// defined in `./src/lib/auth/sql/destroy_session.sql`.
 ///
 /// > 🐿️ This function was generated automatically using v1.7.0 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).

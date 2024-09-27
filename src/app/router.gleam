@@ -1,5 +1,6 @@
 import app/web.{type Context}
-import lib/user/handler as user_handler
+import lib/auth/auth_handler
+import lib/user/user_handler
 import wisp.{type Request, type Response}
 
 pub fn handle_request(req: Request, ctx: Context) -> Response {
@@ -8,6 +9,7 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
 
   case path_segments {
     ["api", "users", ..rest] -> user_handler.handle_request(rest, req, ctx)
+    ["api", "auth", ..rest] -> auth_handler.handle_request(rest, req, ctx)
     _ -> wisp.not_found()
   }
 }

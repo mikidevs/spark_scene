@@ -3,10 +3,10 @@
 import gleam/json.{object, string}
 import gleam/list
 import lib/common/id.{type Id}
-import lib/user/types/email.{type Email}
+import lib/user/model/email.{type Email}
 
 pub type User {
-  User(id: Id, full_name: String, email: Email, password_hash: String)
+  User(id: Id(User), full_name: String, email: Email)
 }
 
 pub fn serialise(user: User) -> json.Json {

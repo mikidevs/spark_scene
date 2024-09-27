@@ -6,9 +6,9 @@ import gleam/bool
 import gleam/order
 import gleam/regex
 import gleam/string
-import lib/user/types/email
-import lib/user/types/login_user.{type LoginUser}
-import lib/user/types/user.{type User}
+import lib/auth/model/login_user.{type LoginUser}
+import lib/auth/model/validation_user.{type ValidationUser}
+import lib/user/model/email.{type Email}
 
 pub fn is_valid_email_string(to_verify: email.Email) -> Bool {
   let assert Ok(reg) =
@@ -25,10 +25,7 @@ fn is_valid_password(to_verify: String, hashed_password: String) -> Bool {
   |> antigone.verify(hashed_password)
 }
 
-fn is_valid_email(
-  to_verify to_verify: email.Email,
-  against email: email.Email,
-) -> Bool {
+fn is_valid_email(to_verify to_verify: Email, against email: Email) -> Bool {
   case string.compare(to_verify.value, email.value) {
     order.Eq -> True
     _ -> False
@@ -37,10 +34,11 @@ fn is_valid_email(
 
 pub fn validate_login_user(
   to_verify: LoginUser,
-  against: User,
+  against: ValidationUser,
 ) -> Result(Nil, String) {
   let login_user.LoginUser(email, pass) = to_verify
-  let user.User(_, email: valid_email, password_hash: valid_password) = against
+  let validation_user.ValidationUser(_, _, valid_email, valid_password) =
+    against
 
   use <- bool.guard(
     !is_valid_email(email, against: valid_email),
