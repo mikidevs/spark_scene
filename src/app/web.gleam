@@ -3,6 +3,7 @@ import birl/duration
 import deps/cors_builder as cors
 import gleam/dynamic.{type Dynamic}
 import gleam/http.{Get, Post}
+import gleam/json
 import gleam/order
 import gleam/result
 import gleam/string_builder
@@ -32,11 +33,8 @@ pub fn middleware(
   let req = wisp.method_override(req)
 
   use <- wisp.log_request(req)
-
   use <- wisp.rescue_crashes()
-
   use req <- wisp.handle_head(req)
-
   use req <- cors.wisp_middleware(req, cors())
 
   handle_request(req, ctx)
@@ -152,4 +150,10 @@ pub fn validation_guard(
       |> wisp.json_body(error)
     }
   }
+}
+
+pub fn to_json_body(response: Response, json: json.Json) {
+  json
+  |> json.to_string_builder()
+  |> wisp.json_body(response, _)
 }
