@@ -1,9 +1,9 @@
 import gleam/dynamic.{type Dynamic, field, string}
 import gleam/result
-import lib/user/model/email.{type Email}
+import lib/common/email.{type Email, type Invalid}
 
 pub type LoginUser {
-  LoginUser(email: Email, password: String)
+  LoginUser(email: Email(Invalid), password: String)
 }
 
 pub fn decode_from_json(json: Dynamic) -> Result(LoginUser, String) {
@@ -12,7 +12,7 @@ pub fn decode_from_json(json: Dynamic) -> Result(LoginUser, String) {
       LoginUser,
       field("email", of: fn(dyn) {
         use email_str <- result.try(dynamic.string(dyn))
-        Ok(email.Email(email_str))
+        Ok(email.from_string(email_str))
       }),
       field("password", of: string),
     )

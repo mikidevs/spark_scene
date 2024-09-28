@@ -2,17 +2,25 @@
 
 import gleam/dynamic.{type Dynamic, field, string}
 import gleam/result
+import lib/common/email.{type Email, type Invalid, type Valid}
 
-pub type RegisterUser {
-  RegisterUser(full_name: String, email: String, password: String)
+pub type RegisterUserData {
+  RegisterUserData(full_name: String, email: Email(Invalid), password: String)
 }
 
-pub fn from_json(json: Dynamic) -> Result(RegisterUser, String) {
+pub type ValidRegisterUser {
+  ValidRegisterUser(full_name: String, email: Email(Valid), password: String)
+}
+
+pub fn from_json(json: Dynamic) -> Result(RegisterUserData, String) {
   let decoder =
     dynamic.decode3(
-      RegisterUser,
+      RegisterUserData,
       field("full_name", of: string),
-      field("email", of: string),
+      field("email", of: fn(dyn) {
+        string(dyn)
+        |> result.map(fn(str) { email.from_string(str) })
+      }),
       field("password", of: string),
     )
 

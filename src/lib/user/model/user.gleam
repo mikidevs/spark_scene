@@ -1,12 +1,12 @@
 //// Represents the User entity, sent out from backend
+//// Does not concern itself with validation since data in the db is assumed to be valid
 
 import gleam/json.{object, string}
 import gleam/list
 import lib/common/id.{type Id}
-import lib/user/model/email.{type Email}
 
 pub type User {
-  User(id: Id(User), full_name: String, email: Email)
+  User(id: Id(User), full_name: String, email: String)
 }
 
 pub fn serialise(user: User) -> json.Json {
@@ -16,7 +16,7 @@ pub fn serialise(user: User) -> json.Json {
       "attributes",
       object([
         #("full_name", string(user.full_name)),
-        #("email", string(user.email.value)),
+        #("email", string(user.email)),
       ]),
     ),
   ])

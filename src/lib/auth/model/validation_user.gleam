@@ -1,11 +1,12 @@
+//// Includes password to validate user, assumes valid email since db will only contain valid data
+
 import lib/common/id.{type Id}
-import lib/user/model/email.{type Email}
 
 pub type ValidationUser {
   ValidationUser(
     id: Id(ValidationUser),
     full_name: String,
-    email: Email,
+    email: String,
     password_hash: String,
   )
 }
