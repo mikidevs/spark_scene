@@ -8,9 +8,8 @@ import gleam/order
 import gleam/result
 import gleam/string_builder
 import lib/auth/model/session.{type SessionError, Session}
-import lib/auth/session_repository as session_repo
+import lib/auth/session_data_access as session_db
 import lib/common/db.{type Db}
-import lib/common/json_util
 import wisp.{type Request, type Response}
 
 pub type Context {
@@ -73,7 +72,7 @@ fn get_session_cookie(request: Request) {
 
 /// If session expires in 10 minutes, add 20 minutes to the session expiration
 fn validate_cookie(db: Db, session_id: String) -> Result(Nil, SessionError) {
-  use session <- result.try(session_repo.session_by_id(db, session_id))
+  use session <- result.try(session_db.session_by_id(db, session_id))
   let session.Session(session_id, _, expiration_time) = session
   case birl.compare(expiration_time, birl.now()) {
     order.Gt | order.Eq -> {
@@ -94,6 +93,16 @@ fn validate_cookie(db: Db, session_id: String) -> Result(Nil, SessionError) {
   }
 }
 
+pub fn json_message(message: String) -> json.Json {
+  json.object([#("message", json.string(message))])
+}
+
+pub fn json_body(response: Response, json: json.Json) {
+  json
+  |> json.to_string_builder()
+  |> wisp.json_body(response, _)
+}
+
 /// Checks the request session cookie and validates it
 pub fn requires_auth(
   request: Request,
@@ -109,12 +118,12 @@ pub fn requires_auth(
   |> result.map_error(fn(session_error) {
     let msg = case session_error {
       session.SessionExpired ->
-        json_util.message("Your session has expired, please login again")
-      _ -> json_util.message("You are not logged in")
+        json_message("Your session has expired, please login again")
+      _ -> json_message("You are not logged in")
     }
 
     unauthorized()
-    |> wisp.json_body(msg)
+    |> json_body(msg)
   })
   |> result.unwrap_both
 }
@@ -128,33 +137,8 @@ pub fn json_guard(
   use json <- wisp.require_json(req)
   case decoder(json) {
     Ok(t) -> handler(t)
-    Error(msg) -> {
-      let error = json_util.message(msg)
+    Error(msg) ->
       wisp.bad_request()
-      |> wisp.json_body(error)
-    }
+      |> json_body(json_message(msg))
   }
-}
-
-/// Tries to run a validator against a value and returns an unprocessable content when the validation fails
-pub fn validation_guard(
-  to_validate: a,
-  valid: b,
-  validator: fn(a, b) -> Result(Nil, String),
-  handler: fn(b) -> Response,
-) {
-  case validator(to_validate, valid) {
-    Ok(_) -> handler(valid)
-    Error(msg) -> {
-      let error = json_util.message(msg)
-      wisp.unprocessable_entity()
-      |> wisp.json_body(error)
-    }
-  }
-}
-
-pub fn to_json_body(response: Response, json: json.Json) {
-  json
-  |> json.to_string_builder()
-  |> wisp.json_body(response, _)
 }

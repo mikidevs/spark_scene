@@ -1,7 +1,7 @@
 import birl.{type Time}
 import gleam/result
 import gluid
-import lib/auth/model/validation_user
+import lib/auth/model/login_user
 import lib/auth/sql
 import lib/common/db.{type Db}
 import lib/common/id.{type Id}
@@ -17,7 +17,7 @@ pub type SessionError {
 
 pub fn create(
   db: Db,
-  user_id: Id(validation_user.ValidationUser),
+  user_id: Id(login_user.ValidLoginUser),
   expiration_time: birl.Time,
 ) -> String {
   let session_id = gluid.guidv4()

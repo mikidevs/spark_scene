@@ -4,7 +4,7 @@ pub type Invalid
 
 pub type Valid
 
-pub opaque type Email(validation) {
+pub type Email(validation) {
   Email(value: String)
 }
 

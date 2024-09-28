@@ -1,13 +1,15 @@
 import app/web.{type Context}
 import birl
 import birl/duration
-import gleam/bool
+import gleam/result
 import lib/auth/model/login_user
 import lib/auth/model/session
-import lib/auth/validations
-import lib/common/json_util
+import lib/common/email
+import lib/common/password
 import lib/user/user_data_access as user_db
 import wisp.{type Request, type Response}
+
+const session_time = 30
 
 pub fn handle_request(
   path_segments: List(String),
@@ -21,43 +23,41 @@ pub fn handle_request(
 }
 
 fn login(req: Request, ctx: Context) -> Response {
-  use login_user <- web.json_guard(req, login_user.decode_from_json)
-  wisp.ok()
-  // use <- bool.lazy_guard(validations.is_valid_email_string(login_user.email), {
-  //   let error = json_util.message("Invalid email address")
-  //   wisp.unprocessable_entity()
-  //   |> wisp.json_body(error)
-  // })
+  use login_user <- web.json_guard(req, login_user.from_json)
+  let login_user.LoginUser(email, password) = login_user
+  let response_ = {
+    use email <- result.try(email.validate_format(email))
+    use valid_user <- result.try(user_db.login_user_by_email(email, ctx.db))
+    use _ <- result.try(password.verify_password(
+      password,
+      valid_user.password_hash,
+    ))
 
-  // case user_db.validation_user_by_email(ctx.db, login_user.email) {
-  //   Ok(db_user) -> {
-  //     use user <- web.validation_guard(
-  //       login_user,
-  //       db_user,
-  //       validations.validate_login_user,
-  //     )
-  //     let session_time = 30
-  //     let session_id =
-  //       session.create(
-  //         ctx.db,
-  //         user.id,
-  //         birl.now() |> birl.add(duration.minutes(session_time)),
-  //       )
-  //     let success = json_util.message("User login successful")
-  //     wisp.ok()
-  //     |> wisp.set_cookie(
-  //       req,
-  //       "AUTH_COOKIE",
-  //       session_id,
-  //       wisp.Signed,
-  //       session_time * 60,
-  //     )
-  //     |> wisp.json_body(success)
-  //   }
-  //   Error(msg) -> {
-  //     let error = json_util.message(msg)
-  //     wisp.unprocessable_entity()
-  //     |> wisp.json_body(error)
-  //   }
-  // }
+    let session_id =
+      session.create(
+        ctx.db,
+        valid_user.id,
+        birl.now() |> birl.add(duration.minutes(session_time)),
+      )
+
+    let success = web.json_message("User login successful")
+    wisp.ok()
+    |> wisp.set_cookie(
+      req,
+      "AUTH_COOKIE",
+      session_id,
+      wisp.Signed,
+      session_time * 60,
+    )
+    |> web.json_body(success)
+    |> Ok
+  }
+
+  case response_ {
+    Ok(resp) -> resp
+    Error(msg) -> {
+      wisp.unprocessable_entity()
+      |> web.json_body(web.json_message(msg))
+    }
+  }
 }
