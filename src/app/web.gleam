@@ -25,9 +25,9 @@ fn cors() {
 }
 
 pub fn middleware(
-  req: Request,
   ctx: Context,
-  handle_request: fn(Request, Context) -> Response,
+  req: Request,
+  handle_request: fn(Context, Request) -> Response,
 ) {
   let req = wisp.method_override(req)
 
@@ -36,12 +36,12 @@ pub fn middleware(
   use req <- wisp.handle_head(req)
   use req <- cors.wisp_middleware(req, cors())
 
-  handle_request(req, ctx)
+  handle_request(ctx, req)
 }
 
 pub fn get(
-  req: Request,
   context: Context,
+  req: Request,
   handler: fn(Request, Context) -> Response,
 ) {
   case req.method {
@@ -51,8 +51,8 @@ pub fn get(
 }
 
 pub fn post(
-  req: Request,
   context: Context,
+  req: Request,
   handler: fn(Request, Context) -> Response,
 ) {
   case req.method {
@@ -105,15 +105,15 @@ pub fn json_body(response: Response, json: json.Json) {
 
 /// Checks the request session cookie and validates it
 pub fn requires_auth(
-  request: Request,
   context: Context,
-  handler: fn(Request, Context) -> Response,
+  request: Request,
+  handler: fn() -> Response,
 ) -> Response {
   {
     use session_id <- result.try(get_session_cookie(request))
     use _ <- result.try(validate_cookie(context.db, session_id))
     use _ <- result.try(session.destroy(context.db, session_id))
-    Ok(handler(request, context))
+    Ok(handler())
   }
   |> result.map_error(fn(session_error) {
     let msg = case session_error {

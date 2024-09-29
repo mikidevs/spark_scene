@@ -37,7 +37,7 @@ pub fn main() {
   let ctx = Context(db: db)
 
   let assert Ok(_) =
-    router.handle_request(_, ctx)
+    router.handle_request(ctx, _)
     |> wisp_mist.handler(secret_key)
     |> mist.new
     |> mist.port(8000)

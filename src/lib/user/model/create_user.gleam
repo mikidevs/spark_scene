@@ -5,26 +5,26 @@ import gleam/result
 import lib/common/email.{type Email, type Invalid, type Valid}
 import lib/common/password.{type NonValidatedPassword, type ValidatedPassword}
 
-pub opaque type RegisterUser {
-  RegisterUser(
+pub opaque type CreateUser {
+  CreateUser(
     full_name: String,
     email: Email(Invalid),
     password: NonValidatedPassword,
   )
 }
 
-pub type ValidRegisterUser {
-  ValidRegisterUser(
+pub type ValidCreateUser {
+  ValidCreateUser(
     full_name: String,
     email: Email(Valid),
     password: ValidatedPassword,
   )
 }
 
-pub fn from_json(json: Dynamic) -> Result(RegisterUser, String) {
+pub fn from_json(json: Dynamic) -> Result(CreateUser, String) {
   let decoder =
     dynamic.decode3(
-      RegisterUser,
+      CreateUser,
       field("full_name", of: string),
       field("email", of: fn(dyn) {
         string(dyn)
@@ -40,10 +40,10 @@ pub fn from_json(json: Dynamic) -> Result(RegisterUser, String) {
   |> result.replace_error("Invalid registration submission")
 }
 
-pub fn validate(reg_user: RegisterUser) -> Result(ValidRegisterUser, String) {
-  let RegisterUser(full_name, email, password) = reg_user
+pub fn validate(create_user: CreateUser) -> Result(ValidCreateUser, String) {
+  let CreateUser(full_name, email, password) = create_user
   // structural validation
   use email <- result.try(email.validate_format(email))
   use password <- result.try(password.validate_format(password))
-  Ok(ValidRegisterUser(full_name, email, password))
+  Ok(ValidCreateUser(full_name, email, password))
 }

@@ -7,7 +7,7 @@ import lib/common/db.{type Db}
 import lib/common/email.{type Email, type Valid}
 import lib/common/id
 import lib/common/password
-import lib/user/model/register_user.{type ValidRegisterUser}
+import lib/user/model/create_user.{type ValidCreateUser}
 import lib/user/model/update_user.{type ValidUpdateUser}
 import lib/user/model/user.{type User, User}
 import lib/user/sql
@@ -20,7 +20,7 @@ pub fn all(db: Db) -> List(User) {
   })
 }
 
-pub fn one(id: Int, db: Db) -> Result(User, String) {
+pub fn one(db: Db, id: Int) -> Result(User, String) {
   let assert Ok(Returned(count, rows)) = sql.user_by_id(db, id)
   case count < 1 {
     True -> Error("The user with this id does not exist")
@@ -31,7 +31,7 @@ pub fn one(id: Int, db: Db) -> Result(User, String) {
   }
 }
 
-pub fn save(user: ValidRegisterUser, db: Db) -> Result(User, String) {
+pub fn save(db: Db, user: ValidCreateUser) -> Result(User, String) {
   let email = email.unwrap(user.email)
   let assert Ok(Returned(count, _)) = sql.user_by_email(db, email)
 
@@ -51,7 +51,7 @@ pub fn save(user: ValidRegisterUser, db: Db) -> Result(User, String) {
   }
 }
 
-pub fn update(user: ValidUpdateUser, db: Db) -> Result(Nil, String) {
+pub fn update(db: Db, user: ValidUpdateUser) -> Result(Nil, String) {
   let update_user.ValidUpdateUser(id, full_name, email, password) = user
 
   let assert Ok(Returned(count, _)) =
@@ -70,8 +70,8 @@ pub fn update(user: ValidUpdateUser, db: Db) -> Result(Nil, String) {
 }
 
 pub fn login_user_by_email(
-  email: Email(Valid),
   db: Db,
+  email: Email(Valid),
 ) -> Result(login_user.ValidLoginUser, String) {
   let email = email.unwrap(email)
 

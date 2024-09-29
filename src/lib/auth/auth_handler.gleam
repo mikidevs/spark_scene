@@ -12,12 +12,12 @@ import wisp.{type Request, type Response}
 const session_time = 30
 
 pub fn handle_request(
-  path_segments: List(String),
-  req: Request,
   ctx: Context,
+  req: Request,
+  path_segments: List(String),
 ) -> Response {
   case path_segments {
-    ["login"] -> web.post(req, ctx, login)
+    ["login"] -> web.post(ctx, req, login)
     _ -> wisp.not_found()
   }
 }
@@ -27,7 +27,7 @@ fn login(req: Request, ctx: Context) -> Response {
   let login_user.LoginUser(email, password) = login_user
   let response_ = {
     use email <- result.try(email.validate_format(email))
-    use valid_user <- result.try(user_db.login_user_by_email(email, ctx.db))
+    use valid_user <- result.try(user_db.login_user_by_email(ctx.db, email))
     use _ <- result.try(password.verify_password(
       password,
       valid_user.password_hash,
