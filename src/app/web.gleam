@@ -18,7 +18,7 @@ pub type Context {
 
 fn cors() {
   cors.new()
-  |> cors.allow_origin("http://localhost:1234")
+  |> cors.allow_origin("http://localhost:5173")
   |> cors.allow_method(Get)
   |> cors.allow_method(Post)
   |> cors.allow_header("content-type")

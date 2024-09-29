@@ -10,6 +10,7 @@ pub fn handle_request(ctx: Context, req: Request) -> Response {
   case path_segments {
     ["api", "users", ..rest] -> user_handler.handle_request(ctx, req, rest)
     ["api", "auth", ..rest] -> auth_handler.handle_request(ctx, req, rest)
+    ["api", "test"] -> wisp.ok() |> web.json_body(web.json_message("Hello"))
     _ -> wisp.not_found()
   }
 }
