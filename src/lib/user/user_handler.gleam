@@ -1,6 +1,7 @@
 import app/web.{type Context}
 import gleam/http.{Delete, Get, Post, Put}
 import gleam/int
+import gleam/io
 import gleam/result
 import lib/user/model/create_user
 import lib/user/model/update_user
@@ -52,15 +53,14 @@ fn one(ctx: Context, req: Request, id: String) -> Response {
 
 fn create(ctx: Context, req: Request) -> Response {
   use create_user <- web.json_guard(req, create_user.from_json)
+  io.debug(create_user)
 
-  let user_ =
-    create_user.validate(create_user)
-    |> result.try(user_db.save(ctx.db, _))
+  let user_ = create_user.validate(create_user)
+  // |> result.try(user_db.save(ctx.db, _))
 
   case user_ {
-    Ok(user) ->
-      wisp.created()
-      |> web.json_body(user.serialise(user))
+    Ok(user) -> wisp.created()
+    // |> web.json_body(user.serialise(user))
     Error(msg) ->
       wisp.unprocessable_entity()
       |> web.json_body(web.json_message(msg))
