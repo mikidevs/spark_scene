@@ -2,11 +2,11 @@
 
 import gleam/list
 import gleam/pgo.{Returned}
-import lib/auth/model/login_user
 import lib/common/db.{type Db}
 import lib/common/email.{type Email, type Valid}
 import lib/common/id
 import lib/common/password
+import lib/session/model/login_user
 import lib/user/model/create_user.{type ValidCreateUser}
 import lib/user/model/update_user.{type ValidUpdateUser}
 import lib/user/model/user.{type User, User}

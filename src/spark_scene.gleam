@@ -32,9 +32,11 @@ pub fn main() {
       ),
     )
 
-  let secret_key = env.get_string_or("SPARK_SECRET_KEY", wisp.random_string(64))
+  let assert Ok(priv_directory) = wisp.priv_directory("spark_scene")
 
-  let ctx = Context(db: db)
+  let ctx = Context(db: db, static_directory: priv_directory <> "/static")
+
+  let secret_key = env.get_string_or("SPARK_SECRET_KEY", wisp.random_string(64))
 
   let assert Ok(_) =
     router.handle_request(ctx, _)

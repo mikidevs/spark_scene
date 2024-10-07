@@ -7,14 +7,18 @@ import gleam/json
 import gleam/order
 import gleam/result
 import gleam/string_builder
-import lib/auth/model/session.{type SessionError, Session}
-import lib/auth/session_data_access as session_db
 import lib/common/db.{type Db}
+import lib/session/model/session.{type SessionError, Session}
+import lib/session/session_data_access as session_db
+import lustre/element
 import wisp.{type Request, type Response}
 
 pub type Context {
-  Context(db: Db)
+  Context(db: Db, static_directory: String)
 }
+
+pub type Element =
+  element.Element(Nil)
 
 fn cors() {
   cors.new()
@@ -35,6 +39,7 @@ pub fn middleware(
   use <- wisp.rescue_crashes()
   use req <- wisp.handle_head(req)
   use req <- cors.wisp_middleware(req, cors())
+  use <- wisp.serve_static(req, under: "/static", from: ctx.static_directory)
 
   handle_request(ctx, req)
 }
@@ -42,10 +47,10 @@ pub fn middleware(
 pub fn get(
   context: Context,
   req: Request,
-  handler: fn(Request, Context) -> Response,
+  handler: fn(Context, Request) -> Response,
 ) {
   case req.method {
-    http.Get -> handler(req, context)
+    http.Get -> handler(context, req)
     _ -> wisp.method_not_allowed([Get])
   }
 }
@@ -53,10 +58,10 @@ pub fn get(
 pub fn post(
   context: Context,
   req: Request,
-  handler: fn(Request, Context) -> Response,
+  handler: fn(Context, Request) -> Response,
 ) {
   case req.method {
-    http.Post -> handler(req, context)
+    http.Post -> handler(context, req)
     _ -> wisp.method_not_allowed([Post])
   }
 }
@@ -101,6 +106,12 @@ pub fn json_body(response: Response, json: json.Json) {
   json
   |> json.to_string_builder()
   |> wisp.json_body(response, _)
+}
+
+pub fn html_body(response: Response, element: Element) {
+  element
+  |> element.to_document_string_builder()
+  |> wisp.html_body(response, _)
 }
 
 /// Checks the request session cookie and validates it
