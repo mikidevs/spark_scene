@@ -2,10 +2,10 @@ import app/web.{type Context}
 import birl
 import birl/duration
 import gleam/result
-import lib/common/email
-import lib/common/password
 import lib/session/model/login_user
 import lib/session/model/session
+import lib/shared/types/email
+import lib/shared/types/password
 import lib/user/user_data_access as user_db
 import wisp.{type Request, type Response}
 

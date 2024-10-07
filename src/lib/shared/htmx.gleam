@@ -16,7 +16,6 @@ fn head() -> Element {
       "",
     ),
     html.link([attr.rel("stylesheet"), attr.href("/static/tailwind_out.css")]),
-    html.link([attr.rel("stylesheet"), attr.href("/static/styles.css")]),
     html.title([], "HTMX Testing in Gleam"),
   ])
 }

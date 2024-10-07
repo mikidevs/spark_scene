@@ -7,9 +7,9 @@ import gleam/json
 import gleam/order
 import gleam/result
 import gleam/string_builder
-import lib/common/db.{type Db}
 import lib/session/model/session.{type SessionError, Session}
 import lib/session/session_data_access as session_db
+import lib/shared/types/db.{type Db}
 import lustre/element
 import wisp.{type Request, type Response}
 

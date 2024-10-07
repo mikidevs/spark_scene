@@ -22,6 +22,12 @@ sudo -u postgres psql -p 5555 -d spark_scene
 gleam run -m squirrel
 ```
 
+## Generate tailwind classes
+
+```
+.\tailwindcss.exe -i .\priv\static\tailwind.css -o .\priv\static\tailwind_out.css --watch
+```
+
 ## Run program
 ```
 source .pg_env && gleam run

@@ -2,8 +2,10 @@
 
 import gleam/dynamic.{type Dynamic, field, string}
 import gleam/result
-import lib/common/email.{type Email, type Invalid, type Valid}
-import lib/common/password.{type NonValidatedPassword, type ValidatedPassword}
+import lib/shared/types/email.{type Email, type Invalid, type Valid}
+import lib/shared/types/password.{
+  type NonValidatedPassword, type ValidatedPassword,
+}
 
 pub opaque type CreateUser {
   CreateUser(

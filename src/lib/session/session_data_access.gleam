@@ -1,8 +1,8 @@
 import birl
 import gleam/pgo
-import lib/common/db.{type Db}
 import lib/session/model/session.{type Session, type SessionError}
 import lib/session/sql
+import lib/shared/types/db.{type Db}
 
 pub fn session_by_id(
   db: Db,

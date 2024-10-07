@@ -1,10 +1,10 @@
 import birl.{type Time}
 import gleam/result
 import gluid
-import lib/common/db.{type Db}
-import lib/common/id.{type Id}
 import lib/session/model/login_user
 import lib/session/sql
+import lib/shared/types/db.{type Db}
+import lib/shared/types/id.{type Id}
 
 pub type Session {
   Session(session_id: String, user_id: Int, expiration_time: birl.Time)

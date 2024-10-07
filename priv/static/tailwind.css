@@ -1,3 +1,24 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+* {
+    color: white;
+    letter-spacing: 0.025em;
+}
+  
+.spark-btn {
+    @apply w-full py-2 mx-auto bg-primary font-medium rounded-lg text-surface-200 border border-secondary focus:outline-none hover:bg-secondary;
+} 
+
+.spark-input {
+    @apply bg-ground w-full border border-tertiary p-2.5 text-sm rounded outline outline-0 placeholder:text-surface-300 hover:border-secondary focus:outline-secondary focus:outline-1;
+}
+
+.spark-link {
+    @apply cursor-pointer text-primary hover:text-secondary;
+}
+
+.spark-error {
+    @apply text-error text-sm;
+}
