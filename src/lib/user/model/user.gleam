@@ -3,7 +3,7 @@
 
 import gleam/json.{object, string}
 import gleam/list
-import lib/common/id.{type Id}
+import lib/shared/types/id.{type Id}
 
 pub type User {
   User(id: Id(User), full_name: String, email: String)

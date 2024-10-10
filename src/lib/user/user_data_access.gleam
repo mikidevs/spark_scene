@@ -2,13 +2,12 @@
 
 import gleam/list
 import gleam/pgo.{Returned}
-import lib/auth/model/login_user
-import lib/common/db.{type Db}
-import lib/common/email.{type Email, type Valid}
-import lib/common/id
-import lib/common/password
-import lib/user/model/create_user.{type ValidCreateUser}
-import lib/user/model/update_user.{type ValidUpdateUser}
+import lib/session/model/login_user
+import lib/shared/password
+import lib/shared/types/db.{type Db}
+import lib/shared/types/id
+import lib/user/model/create_user.{type CreateUser}
+import lib/user/model/update_user.{type UpdateUser}
 import lib/user/model/user.{type User, User}
 import lib/user/sql
 
@@ -31,9 +30,8 @@ pub fn one(db: Db, id: Int) -> Result(User, String) {
   }
 }
 
-pub fn save(db: Db, user: ValidCreateUser) -> Result(User, String) {
-  let email = email.unwrap(user.email)
-  let assert Ok(Returned(count, _)) = sql.user_by_email(db, email)
+pub fn save(db: Db, user: CreateUser) -> Result(User, String) {
+  let assert Ok(Returned(count, _)) = sql.user_by_email(db, user.email)
 
   case count > 0 {
     True -> Error("This email is already being used")
@@ -42,8 +40,8 @@ pub fn save(db: Db, user: ValidCreateUser) -> Result(User, String) {
         sql.insert_user(
           db,
           user.full_name,
-          email,
-          password.hash(password.unwrap(user.password)),
+          user.email,
+          password.hash(user.password),
         )
       let assert [sql.InsertUserRow(id, full_name, email)] = rows
       Ok(User(id.from_int(id), full_name, email))
@@ -51,17 +49,11 @@ pub fn save(db: Db, user: ValidCreateUser) -> Result(User, String) {
   }
 }
 
-pub fn update(db: Db, user: ValidUpdateUser) -> Result(Nil, String) {
-  let update_user.ValidUpdateUser(id, full_name, email, password) = user
+pub fn update(db: Db, user: UpdateUser) -> Result(Nil, String) {
+  let update_user.UpdateUser(id, full_name, email, password) = user
 
   let assert Ok(Returned(count, _)) =
-    sql.update_user(
-      db,
-      id.to_int(id),
-      full_name,
-      email.unwrap(email),
-      password.unwrap(password),
-    )
+    sql.update_user(db, id.to_int(id), full_name, email, password)
 
   case count < 1 {
     True -> Error("The user with this id does not exist")
@@ -71,21 +63,15 @@ pub fn update(db: Db, user: ValidUpdateUser) -> Result(Nil, String) {
 
 pub fn login_user_by_email(
   db: Db,
-  email: Email(Valid),
+  email: String,
 ) -> Result(login_user.ValidLoginUser, String) {
-  let email = email.unwrap(email)
-
   let assert Ok(Returned(_, rows)) = sql.user_by_email(db, email)
   case rows {
     [] -> Error("This email does not exist")
     _ -> {
-      let assert [sql.UserByEmailRow(id, _, email, password_hash)] = rows
+      let assert [sql.UserByEmailRow(_, _, email, password_hash)] = rows
 
-      Ok(login_user.ValidLoginUser(
-        id.from_int(id),
-        email.Email(email),
-        password.ValidatedPassword(password_hash),
-      ))
+      Ok(login_user.ValidLoginUser(email, password_hash))
     }
   }
 }

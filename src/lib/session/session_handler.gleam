@@ -2,10 +2,10 @@ import app/web.{type Context}
 import birl
 import birl/duration
 import gleam/result
-import lib/auth/model/login_user
-import lib/auth/model/session
-import lib/common/email
-import lib/common/password
+import lib/session/model/login_user
+import lib/session/model/session
+import lib/shared/types/email
+import lib/shared/types/password
 import lib/user/user_data_access as user_db
 import wisp.{type Request, type Response}
 
@@ -22,7 +22,7 @@ pub fn handle_request(
   }
 }
 
-fn login(req: Request, ctx: Context) -> Response {
+fn login(ctx: Context, req: Request) -> Response {
   use login_user <- web.json_guard(req, login_user.from_json)
   let login_user.LoginUser(email, password) = login_user
   let response_ = {

@@ -6,9 +6,10 @@ import gleam/result
 import lib/user/model/create_user
 import lib/user/model/update_user
 import lib/user/model/user
-import lib/user/user_data_access as user_db
+import lib/user/user_data_access as user_da
 import wisp.{type Request, type Response}
 
+// /users
 pub fn handle_request(
   ctx: Context,
   req: Request,
@@ -30,7 +31,7 @@ pub fn handle_request(
 
 fn all(ctx: Context, req: Request) -> Response {
   use <- web.requires_auth(ctx, req)
-  let users = user_db.all(ctx.db)
+  let users = user_da.all(ctx.db)
   wisp.ok()
   |> web.json_body(user.serialise_many(users))
 }
@@ -39,7 +40,7 @@ fn one(ctx: Context, req: Request, id: String) -> Response {
   use <- web.requires_auth(ctx, req)
   let user_ =
     result.replace_error(int.parse(id), "Invalid Id")
-    |> result.try(user_db.one(ctx.db, _))
+    |> result.try(user_da.one(ctx.db, _))
 
   case user_ {
     Ok(user) ->
@@ -73,7 +74,7 @@ fn update(ctx: Context, req: Request) -> Response {
 
   let msg_ =
     update_user.validate(update_user)
-    |> result.try(user_db.update(ctx.db, _))
+    |> result.try(user_da.update(ctx.db, _))
     |> result.replace("Updated Resource")
 
   case msg_ {

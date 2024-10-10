@@ -15,7 +15,6 @@ version = "0.0.1"
 [dependencies]
 gleam_stdlib = ">= 0.34.0 and < 2.0.0"
 mist = ">= 2.0.0 and < 3.0.0"
-radiate = ">= 0.4.0 and < 1.0.0"
 gleam_http = ">= 3.6.0 and < 4.0.0"
 gluid = ">= 1.0.0 and < 2.0.0"
 birl = ">= 1.7.1 and < 2.0.0"
@@ -28,6 +27,10 @@ squirrel = ">= 1.7.0 and < 2.0.0"
 gleam_erlang = ">= 0.26.0 and < 1.0.0"
 decode = ">= 0.2.1 and < 1.0.0"
 gleam_otp = ">= 0.12.0 and < 1.0.0"
+lustre = ">= 4.5.1 and < 5.0.0"
+lustre_hx = ">= 0.1.13 and < 1.0.0"
+filespy = ">= 0.5.0 and < 1.0.0"
+formal = ">= 2.2.0 and < 3.0.0"
 
 [dev-dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"
