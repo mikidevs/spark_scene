@@ -2,13 +2,11 @@ import app/web.{type Context}
 import gleam/http.{Delete, Get, Post, Put}
 import gleam/int
 import gleam/io
-import gleam/list
 import gleam/result
-import gleam/string
 import lib/user/model/create_user
 import lib/user/model/update_user
 import lib/user/model/user
-import lib/user/user_data_access as user_db
+import lib/user/user_data_access as user_da
 import wisp.{type Request, type Response}
 
 // /users
@@ -26,8 +24,6 @@ pub fn handle_request(
         Delete -> wisp.not_found()
         _ -> wisp.method_not_allowed([Get, Post, Put, Delete])
       }
-    ["sign-in"] -> web.get(ctx, req, sign_in)
-    ["sign-up"] -> web.get(ctx, req, sign_up)
     [id] -> one(ctx, req, id)
     _ -> wisp.not_found()
   }
@@ -35,7 +31,7 @@ pub fn handle_request(
 
 fn all(ctx: Context, req: Request) -> Response {
   use <- web.requires_auth(ctx, req)
-  let users = user_db.all(ctx.db)
+  let users = user_da.all(ctx.db)
   wisp.ok()
   |> web.json_body(user.serialise_many(users))
 }
@@ -44,7 +40,7 @@ fn one(ctx: Context, req: Request, id: String) -> Response {
   use <- web.requires_auth(ctx, req)
   let user_ =
     result.replace_error(int.parse(id), "Invalid Id")
-    |> result.try(user_db.one(ctx.db, _))
+    |> result.try(user_da.one(ctx.db, _))
 
   case user_ {
     Ok(user) ->
@@ -53,28 +49,6 @@ fn one(ctx: Context, req: Request, id: String) -> Response {
     Error(msg) ->
       wisp.unprocessable_entity()
       |> web.json_body(web.json_message(msg))
-  }
-}
-
-fn sign_in(ctx: Context, req: Request) -> Response {
-  todo
-}
-
-fn sign_up(ctx: Context, req: Request) -> Response {
-  todo
-}
-
-fn is_json_request(req: Request) -> Bool {
-  let expected = "application/json"
-  case list.key_find(req.headers, "content-type") {
-    Ok(content_type) -> {
-      case string.split_once(content_type, ";") {
-        Ok(#(content_type, _)) if content_type == expected -> True
-        _ if content_type == expected -> True
-        _ -> False
-      }
-    }
-    _ -> False
   }
 }
 
@@ -100,7 +74,7 @@ fn update(ctx: Context, req: Request) -> Response {
 
   let msg_ =
     update_user.validate(update_user)
-    |> result.try(user_db.update(ctx.db, _))
+    |> result.try(user_da.update(ctx.db, _))
     |> result.replace("Updated Resource")
 
   case msg_ {

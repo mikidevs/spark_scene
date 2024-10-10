@@ -4,8 +4,10 @@ import deps/cors_builder as cors
 import gleam/dynamic.{type Dynamic}
 import gleam/http.{Get, Post}
 import gleam/json
+import gleam/list
 import gleam/order
 import gleam/result
+import gleam/string
 import gleam/string_builder
 import lib/session/model/session.{type SessionError, Session}
 import lib/session/session_data_access as session_db
@@ -19,6 +21,9 @@ pub type Context {
 
 pub type Element =
   element.Element(Nil)
+
+pub type HttpHandler =
+  fn(Context, Request, List(String)) -> Response
 
 fn cors() {
   cors.new()
@@ -139,7 +144,7 @@ pub fn requires_auth(
   |> result.unwrap_both
 }
 
-/// Tries to decode json and returns a bad request when the json is invalid
+/// Tries to decode json and returns a bad request when the json is invalid or not found
 pub fn json_guard(
   req: Request,
   decoder: fn(Dynamic) -> Result(a, String),
@@ -151,5 +156,48 @@ pub fn json_guard(
     Error(msg) ->
       wisp.bad_request()
       |> json_body(json_message(msg))
+  }
+}
+
+/// Tries to read a multipart/form-data from the request and returns a bad request when form is invalid format or not found
+pub fn form_guard(
+  req: Request,
+  decoder: fn(wisp.FormData) -> Result(a, String),
+  handler: fn(a) -> Response,
+) -> Response {
+  use form_data <- wisp.require_form(req)
+  case decoder(form_data) {
+    Ok(t) -> handler(t)
+    Error(msg) -> wisp.bad_request()
+  }
+}
+
+fn is_crud_request(req: Request) -> Bool {
+  let json = "application/json"
+  let form = "multipart/form-data"
+
+  case list.key_find(req.headers, "content-type") {
+    Ok(content_type) -> {
+      case string.split_once(content_type, ";") {
+        Ok(#(content_type, _)) if content_type == json || content_type == form ->
+          True
+        _ if content_type == json || content_type == form -> True
+        _ -> False
+      }
+    }
+    _ -> False
+  }
+}
+
+pub fn delegate_request(
+  ctx: Context,
+  req: Request,
+  path_segments: List(String),
+  crud crud_handler: HttpHandler,
+  view view_handler: HttpHandler,
+) {
+  case is_crud_request(req) {
+    True -> crud_handler(ctx, req, path_segments)
+    False -> view_handler(ctx, req, path_segments)
   }
 }
