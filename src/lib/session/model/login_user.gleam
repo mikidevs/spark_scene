@@ -6,8 +6,13 @@ pub type LoginUser {
   LoginUser(email: String, password: String)
 }
 
+/// Includes the id since the it is needed to create the session
 pub type ValidLoginUser {
-  ValidLoginUser(email: String, password_hash: String)
+  ValidLoginUser(
+    id: id.Id(ValidLoginUser),
+    email: String,
+    password_hash: String,
+  )
 }
 
 pub fn from_json(json: Dynamic) -> Result(LoginUser, String) {

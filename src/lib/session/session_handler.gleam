@@ -4,9 +4,8 @@ import birl/duration
 import gleam/result
 import lib/session/model/login_user
 import lib/session/model/session
-import lib/shared/types/email
-import lib/shared/types/password
-import lib/user/user_data_access as user_db
+import lib/shared/password
+import lib/user/user_data_access as user_da
 import wisp.{type Request, type Response}
 
 const session_time = 30
@@ -26,8 +25,7 @@ fn login(ctx: Context, req: Request) -> Response {
   use login_user <- web.json_guard(req, login_user.from_json)
   let login_user.LoginUser(email, password) = login_user
   let response_ = {
-    use email <- result.try(email.validate_format(email))
-    use valid_user <- result.try(user_db.login_user_by_email(ctx.db, email))
+    use valid_user <- result.try(user_da.login_user_by_email(ctx.db, email))
     use _ <- result.try(password.verify_password(
       password,
       valid_user.password_hash,

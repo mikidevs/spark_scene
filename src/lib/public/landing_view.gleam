@@ -1,5 +1,5 @@
 import app/web
-import lib/shared/htmx
+import lib/shared/index_view
 import lustre/attribute as a
 import lustre/element
 import lustre/element/html as h
@@ -7,9 +7,9 @@ import lustre_hx as hx
 import wisp.{type Response}
 
 fn page() -> web.Element {
-  htmx.index([
+  index_view.with_content([
     h.div([a.class("bg-ground h-screen")], [
-      h.div([a.class("w-1/4 mx-auto mt-14")], [
+      h.div([a.class("w-1/4 mx-auto pt-14")], [
         h.h1([a.class("text-2xl w-fit mx-auto mb-6")], [
           element.text("Welcome to Spark Scene"),
         ]),
@@ -39,6 +39,5 @@ fn page() -> web.Element {
 }
 
 pub fn handle_request() -> Response {
-  wisp.ok()
-  |> web.html_body(page())
+  page() |> web.ok_html()
 }

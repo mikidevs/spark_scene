@@ -14,7 +14,7 @@ pub fn main() {
   let _res =
     filespy.new()
     |> filespy.add_dir(".")
-    |> filespy.add_dir("/mnt")
+    |> filespy.add_dir("/mnt/c/Users/Miki/Dev/spark_scene")
     |> filespy.set_handler(fn(path, event) {
       io.debug(#(path, event))
       Nil

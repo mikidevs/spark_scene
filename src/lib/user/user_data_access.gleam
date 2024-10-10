@@ -69,9 +69,9 @@ pub fn login_user_by_email(
   case rows {
     [] -> Error("This email does not exist")
     _ -> {
-      let assert [sql.UserByEmailRow(_, _, email, password_hash)] = rows
+      let assert [sql.UserByEmailRow(id, _, email, password_hash)] = rows
 
-      Ok(login_user.ValidLoginUser(email, password_hash))
+      Ok(login_user.ValidLoginUser(id.from_int(id), email, password_hash))
     }
   }
 }

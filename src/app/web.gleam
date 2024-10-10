@@ -1,8 +1,10 @@
 import birl
 import birl/duration
 import deps/cors_builder as cors
+import formal/form
 import gleam/dynamic.{type Dynamic}
 import gleam/http.{Get, Post}
+import gleam/io
 import gleam/json
 import gleam/list
 import gleam/order
@@ -113,10 +115,10 @@ pub fn json_body(response: Response, json: json.Json) {
   |> wisp.json_body(response, _)
 }
 
-pub fn html_body(response: Response, element: Element) {
+pub fn ok_html(element: Element) {
   element
   |> element.to_document_string_builder()
-  |> wisp.html_body(response, _)
+  |> wisp.html_body(wisp.ok(), _)
 }
 
 /// Checks the request session cookie and validates it
@@ -162,42 +164,13 @@ pub fn json_guard(
 /// Tries to read a multipart/form-data from the request and returns a bad request when form is invalid format or not found
 pub fn form_guard(
   req: Request,
-  decoder: fn(wisp.FormData) -> Result(a, String),
+  decoder: fn(wisp.FormData) -> Result(a, form.Form),
   handler: fn(a) -> Response,
 ) -> Response {
   use form_data <- wisp.require_form(req)
+  io.debug(form_data)
   case decoder(form_data) {
     Ok(t) -> handler(t)
     Error(msg) -> wisp.bad_request()
-  }
-}
-
-fn is_crud_request(req: Request) -> Bool {
-  let json = "application/json"
-  let form = "multipart/form-data"
-
-  case list.key_find(req.headers, "content-type") {
-    Ok(content_type) -> {
-      case string.split_once(content_type, ";") {
-        Ok(#(content_type, _)) if content_type == json || content_type == form ->
-          True
-        _ if content_type == json || content_type == form -> True
-        _ -> False
-      }
-    }
-    _ -> False
-  }
-}
-
-pub fn delegate_request(
-  ctx: Context,
-  req: Request,
-  path_segments: List(String),
-  crud crud_handler: HttpHandler,
-  view view_handler: HttpHandler,
-) {
-  case is_crud_request(req) {
-    True -> crud_handler(ctx, req, path_segments)
-    False -> view_handler(ctx, req, path_segments)
   }
 }
